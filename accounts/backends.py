@@ -6,7 +6,7 @@ User = get_user_model()
 
 
 class EmailOrUsernameModelBackend(ModelBackend):
-    """Permet de se connecter avec le nom d'utilisateur OU l'adresse e-mail (insensible à la casse)."""
+    """Permet de se connecter avec le pseudo, l'e-mail, le prénom ou le nom (insensible à la casse)."""
 
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None:
@@ -15,12 +15,21 @@ class EmailOrUsernameModelBackend(ModelBackend):
             return None
 
         identifier = username.strip()
-        candidates = User.objects.filter(
-            Q(username__iexact=identifier) | Q(email__iexact=identifier)
-        ).order_by("-last_login", "-id")
+        parts = identifier.split()
+        query = (
+            Q(username__iexact=identifier)
+            | Q(email__iexact=identifier)
+            | Q(first_name__iexact=identifier)
+            | Q(last_name__iexact=identifier)
+        )
+        if len(parts) >= 2:
+            query |= Q(first_name__iexact=parts[0], last_name__iexact=" ".join(parts[1:]))
+            query |= Q(last_name__iexact=parts[0], first_name__iexact=" ".join(parts[1:]))
+
+        candidates = User.objects.filter(query).distinct().order_by("-last_login", "-id")
 
         for user in candidates:
-            if user.check_password(password) and self.user_can_authenticate(user):
+            if (user.check_password(password) or user.check_password(password.strip())) and self.user_can_authenticate(user):
                 return user
         return None
 

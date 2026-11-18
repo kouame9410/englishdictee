@@ -42,6 +42,12 @@ class SignUpForm(UserCreationForm):
             "country", "birth_date", "native_language", "goal", "interests",
         )
 
+    def clean_username(self):
+        return (self.cleaned_data.get("username") or "").strip()
+
+    def clean_email(self):
+        return (self.cleaned_data.get("email") or "").strip().lower()
+
     def clean_native_language(self):
         return (self.cleaned_data.get("native_language") or "français").strip()
 
@@ -112,6 +118,9 @@ class ProfileForm(forms.ModelForm):
             "is_anonymous_leaderboard",
             "interests",
         )
+
+    def clean_email(self):
+        return (self.cleaned_data.get("email") or "").strip().lower()
 
     def clean_native_language(self):
         return (self.cleaned_data.get("native_language") or "français").strip()

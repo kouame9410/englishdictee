@@ -31,7 +31,13 @@ class CustomPasswordResetView(auth_views.PasswordResetView):
     def form_valid(self, form):
         identifier = form.cleaned_data.get("email", "").strip()
         user = (
-            User.objects.filter(Q(email__iexact=identifier) | Q(username__iexact=identifier), is_active=True)
+            User.objects.filter(
+                Q(email__iexact=identifier)
+                | Q(username__iexact=identifier)
+                | Q(first_name__iexact=identifier)
+                | Q(last_name__iexact=identifier),
+                is_active=True,
+            )
             .order_by("-last_login", "-id")
             .first()
         )
