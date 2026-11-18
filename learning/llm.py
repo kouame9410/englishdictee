@@ -4,6 +4,7 @@
 - Synthèse vocale TTS avec stockage et réutilisation (Section 7.2)
 """
 import base64
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 import json
 import logging
 from pathlib import Path
@@ -88,45 +89,46 @@ def _api_key(for_tts=False):
     return getattr(settings, "LLM_API_KEY", "") or getattr(settings, "GEMINI_API_KEY", "")
 
 
-def _call_gemini_structured(prompt, schema, system_instruction="", model=None):
+def _call_gemini_structured(prompt, schema, system_instruction="", model=None, timeout_seconds=8):
     """Appelle l'API Gemini avec sortie JSON structurée via le SDK google-genai.
-    Utilise gemini-3.5-flash-lite en priorité pour sa rapidité et sa stabilité, avec repli vers gemini-3.8-flash."""
+    Impose un délai maximal court (8 s) pour éviter tout dépassement de délai Gunicorn (30 s) sur Render."""
     api_key = _api_key(for_tts=False)
     if not api_key:
         return None
 
     configured_model = model or getattr(settings, "LLM_MODEL", "gemini-3.5-flash-lite") or "gemini-3.5-flash-lite"
-    candidate_models = [configured_model]
-    for fallback in ["gemini-3.5-flash-lite", "gemini-3.8-flash"]:
-        if fallback not in candidate_models:
-            candidate_models.append(fallback)
 
-    try:
+    def _invoke():
         from google import genai
         from google.genai import types
 
         client = genai.Client(api_key=api_key)
+        config_args = {
+            "response_mime_type": "application/json",
+            "response_schema": schema,
+            "temperature": 0.4,
+        }
+        if system_instruction:
+            config_args["system_instruction"] = system_instruction
 
-        for mod in candidate_models:
-            try:
-                config_args = {
-                    "response_mime_type": "application/json",
-                    "response_schema": schema,
-                    "temperature": 0.4,
-                }
-                if system_instruction:
-                    config_args["system_instruction"] = system_instruction
+        resp = client.models.generate_content(
+            model=configured_model,
+            contents=prompt,
+            config=types.GenerateContentConfig(**config_args),
+        )
+        if resp and resp.text:
+            return json.loads(resp.text)
+        return None
 
-                resp = client.models.generate_content(
-                    model=mod,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(**config_args),
-                )
-                if resp and resp.text:
-                    return json.loads(resp.text)
-            except Exception as mod_err:
-                logger.warning("Échec Gemini modèle %s : %s", mod, mod_err)
-                continue
+    try:
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(_invoke)
+        try:
+            return future.result(timeout=timeout_seconds)
+        finally:
+            pool.shutdown(wait=False, cancel_futures=True)
+    except FuturesTimeoutError:
+        logger.warning("Délai dépassé (%ss) pour Gemini (%s) -> utilisation du repli local.", timeout_seconds, configured_model)
     except ImportError:
         logger.warning("Le package google-genai n'est pas installé.")
     except Exception as exc:

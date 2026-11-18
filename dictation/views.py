@@ -227,10 +227,9 @@ def submit(request, pk):
 @login_required
 def result(request, pk):
     session = get_object_or_404(DictationSession.objects.select_related("text__level"), pk=pk, user=request.user)
-    if session.status == DictationSession.Status.IN_PROGRESS:
+    submission = Submission.objects.filter(session=session).first()
+    if session.status == DictationSession.Status.IN_PROGRESS or not submission:
         return redirect("dictation:session", pk=session.pk)
-
-    submission = session.submission
     text_level = session.text.level
     level = current_level(request.user)
     exam_ready = UserLevelProgress.objects.filter(

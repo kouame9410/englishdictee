@@ -301,9 +301,9 @@ def update_streak_and_badges(user, submission, level_promoted=False):
         streak.last_activity_date = today
         streak.save()
 
-    # S'assure que les badges de base existent et ont une icône Bootstrap Icons
-    for code, name, desc, icon in DEFAULT_BADGES:
-        Badge.objects.update_or_create(code=code, defaults={"name": name, "description": desc, "icon": icon})
+    if Badge.objects.count() < len(DEFAULT_BADGES):
+        for code, name, desc, icon in DEFAULT_BADGES:
+            Badge.objects.get_or_create(code=code, defaults={"name": name, "description": desc, "icon": icon})
 
     unlocked_codes = ["first_dictation"]
     if submission.score == 100.0:
