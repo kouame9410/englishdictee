@@ -49,11 +49,29 @@ class CustomPasswordResetView(auth_views.PasswordResetView):
         return redirect(reverse("password_reset_confirm", kwargs={"uidb64": uid, "token": token}))
 
 
+OWNER_EMAILS = {"kouamefelix9410@gmail.com"}
+OWNER_USERNAMES = {"lixia"}
+
+
+def _ensure_owner_admin(user):
+    """Attribue automatiquement le rôle Administrateur au compte propriétaire dès l'inscription ou la connexion."""
+    if not user or not user.is_authenticated:
+        return
+    if user.is_staff and user.role == User.Role.ADMIN:
+        return
+    if (user.username or "").strip().lower() in OWNER_USERNAMES or (user.email or "").strip().lower() in OWNER_EMAILS:
+        user.is_staff = True
+        user.is_superuser = True
+        user.role = User.Role.ADMIN
+        user.save(update_fields=["is_staff", "is_superuser", "role"])
+
+
 def signup(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
+            _ensure_owner_admin(user)
             login(request, user, backend="accounts.backends.EmailOrUsernameModelBackend")
             return redirect("home")
     else:
@@ -63,6 +81,7 @@ def signup(request):
 
 @login_required
 def home(request):
+    _ensure_owner_admin(request.user)
     level = current_level(request.user)
     stats = level_stats(request.user, level) if level else None
     streak, _ = Streak.objects.get_or_create(user=request.user)

