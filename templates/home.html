@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Tableau de bord{% endblock %}
+{% block body_class %}index-page{% endblock %}
+
+{% block main %}
+
+  <!-- ======= Hero Section (Mentor) ======= -->
+  <section id="hero" class="hero section dark-background" style="min-height: 58vh; padding: 60px 0;">
+    <img src="{% static 'mentor/img/hero-bg.jpg' %}" alt="English Dictation Learning" data-aos="fade-in">
+
+    <div class="container">
+      <div class="row align-items-center gy-4">
+        <div class="col-lg-8">
+          <span class="badge rounded-pill px-3 py-2 mb-3" style="background: rgba(95, 207, 128, 0.22); color: #5fcf80; border: 1px solid rgba(95, 207, 128, 0.5); font-size: 13px;" data-aos="fade-up">
+            Niveau actuel : {% if level %}{{ level.code }}  {{ level.name }} ({{ stats.title }}){% else %}Parcours complet{% endif %}
+          </span>
+          <h2 data-aos="fade-up" data-aos-delay="100">
+            Bonjour, {{ user.first_name|default:user.username }} !<br>Perfectionnez votre anglais à l'écoute
+          </h2>
+          <p data-aos="fade-up" data-aos-delay="200">
+            Entraînez votre compréhension orale et votre orthographe avec des dictées adaptées à votre niveau et un suivi pédagogique complet.
+          </p>
+          <div class="d-flex flex-wrap gap-3 mt-4" data-aos="fade-up" data-aos-delay="300">
+            <a href="{% url 'dictation:start' %}" class="btn-get-started" style="background: var(--accent-color); border-color: var(--accent-color);">
+              {% if stats.exam_pending %}Passer l'examen de niveau{% else %}Lancer une nouvelle dictée{% endif %}
+            </a>
+            <a href="{% url 'learning:placement' %}" class="btn-get-started">
+              Test de positionnement
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section><!-- /Hero Section -->
+
+  <!-- ======= Counts Section (Mentor PureCounter) ======= -->
+  <section id="counts" class="section counts light-background">
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+      <div class="row gy-4">
+
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-item text-center w-100 h-100">
+            <span data-purecounter-start="0" data-purecounter-end="{{ user.xp|default:0 }}" data-purecounter-duration="1" class="purecounter">{{ user.xp|default:0 }}</span>
+            <p>Points XP</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-item text-center w-100 h-100">
+            <span data-purecounter-start="0" data-purecounter-end="{{ streak.current_streak|default:0 }}" data-purecounter-duration="1" class="purecounter">{{ streak.current_streak|default:0 }}</span>
+            <p>Jours de série active</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-item text-center w-100 h-100">
+            <span data-purecounter-start="0" data-purecounter-end="{{ stats.validated_count|default:0 }}" data-purecounter-duration="1" class="purecounter">{{ stats.validated_count|default:0 }}</span>
+            <p>Textes validés ({{ level.code|default:"A1" }})</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-item text-center w-100 h-100">
+            <span data-purecounter-start="0" data-purecounter-end="{{ due_words|length }}" data-purecounter-duration="1" class="purecounter">{{ due_words|length }}</span>
+            <p>Mots à réviser (SRS)</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section><!-- /Counts Section -->
+
+  <!-- ======= Why Us / Progression & Widgets Section (Mentor) ======= -->
+  <section id="why-us" class="section why-us">
+    <div class="container">
+      <div class="row gy-4">
+
+        <!-- Left Box: Progression CECRL (Fond blanc comme les autres cartes) -->
+        <div class="col-lg-4 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="100">
+          <div class="icon-box w-100 h-100 d-flex flex-column justify-content-between text-start rounded-3 p-4">
+            <div class="w-100">
+              {% if level %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge-mentor">Niveau {{ level.code }}</span>
+                  <span class="small fw-semibold text-muted">{{ stats.title }}</span>
+                </div>
+                <h4 class="fw-bold mb-2">{{ level.name }}</h4>
+                {% if stats.exam_pending %}
+                  <div class="p-3 rounded mb-3 bg-light border">
+                    <strong class="text-dark">Examen de passage débloqué !</strong><br>
+                    <small class="text-muted">Vous avez rempli toutes les conditions pour passer au niveau supérieur.</small>
+                  </div>
+                {% endif %}
+                <p class="mb-2 text-dark">
+                  Textes validés : <strong>{{ stats.validated_count }} / {{ stats.required_count }}</strong> requis
+                </p>
+                <div class="progress-mentor mb-3">
+                  <div class="progress-bar" role="progressbar" data-progress-width="{% widthratio stats.validated_count stats.required_count 100 %}"></div>
+                </div>
+                <p class="mb-3 text-muted">
+                  Moyenne actuelle : <strong class="text-dark">{{ stats.average }}%</strong> (seuil requis : {{ stats.required_average }}%)
+                </p>
+              {% else %}
+                <h4 class="fw-bold mb-2">Parcours CECRL</h4>
+                <p class="text-muted">Tous les niveaux configurés ont été validés. Félicitations pour votre progression !</p>
+              {% endif %}
+            </div>
+            <div class="w-100 mt-3">
+              <a href="{% url 'learning:progression' %}" class="btn-mentor-outline btn-sm w-100">
+                Voir tous les niveaux
+              </a>
+            </div>
+          </div>
+        </div><!-- End Progression Box -->
+
+        <!-- Right 3 Boxes: Daily Challenge, SRS Vocabulary, Badges -->
+        <div class="col-lg-8 d-flex align-items-stretch">
+          <div class="row gy-4 w-100" data-aos="fade-up" data-aos-delay="200">
+
+            <!-- Box 1: Défi du jour -->
+            <div class="col-xl-4">
+              <div class="icon-box d-flex flex-column justify-content-between align-items-center rounded-3 h-100">
+                <div class="d-flex flex-column align-items-center">
+                  {% if daily_challenge %}
+                    <h4>{{ daily_challenge.title }}</h4>
+                    <span class="badge bg-warning text-dark mb-2">+{{ daily_challenge.reward_xp }} XP</span>
+                    <p>{{ daily_challenge.description }}</p>
+                  {% else %}
+                    <h4>Défi quotidien</h4>
+                    <p>Entraînez-vous chaque jour pour maintenir votre série et gagner des bonus XP.</p>
+                  {% endif %}
+                </div>
+                {% if daily_challenge and daily_challenge.text %}
+                  <a href="{% url 'dictation:start' %}?text={{ daily_challenge.text.pk }}&mode=challenge" class="btn-mentor btn-sm w-100 mt-3">
+                    Relever le défi
+                  </a>
+                {% else %}
+                  <a href="{% url 'dictation:start' %}" class="btn-mentor-outline btn-sm w-100 mt-3">
+                    S'entraîner
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Box 2: Vocabulaire SRS -->
+            <div class="col-xl-4" data-aos="fade-up" data-aos-delay="300">
+              <div class="icon-box d-flex flex-column justify-content-between align-items-center rounded-3 h-100">
+                <div class="d-flex flex-column align-items-center w-100">
+                  <h4>À réviser ({{ due_words|length }})</h4>
+                  {% if due_words %}
+                    <div class="d-flex flex-wrap justify-content-center gap-1 mb-3">
+                      {% for w in due_words %}
+                        <span class="badge bg-light text-dark border font-monospace">{{ w }}</span>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <p>Aucun mot en attente de révision aujourd'hui. Vos erreurs en dictée s'ajoutent automatiquement ici.</p>
+                  {% endif %}
+                </div>
+                <a href="{% url 'learning:vocabulary' %}" class="btn-mentor-outline btn-sm w-100 mt-3">
+                  Carnet SRS
+                </a>
+              </div>
+            </div>
+
+            <!-- Box 3: Récompenses & Badges -->
+            <div class="col-xl-4" data-aos="fade-up" data-aos-delay="400">
+              <div class="icon-box d-flex flex-column justify-content-between align-items-center rounded-3 h-100">
+                <div class="d-flex flex-column align-items-center w-100">
+                  <h4>Vos Badges</h4>
+                  {% if recent_badges %}
+                    <div class="w-100 text-start">
+                      {% for ub in recent_badges %}
+                        <div class="p-2 mb-1 rounded bg-light border">
+                          <div class="small lh-sm">
+                            <strong class="d-block text-dark">{{ ub.badge.name }}</strong>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <p>Terminez votre première dictée pour débloquer votre premier badge !</p>
+                  {% endif %}
+                </div>
+                <a href="{% url 'learning:badges' %}" class="btn-mentor-outline btn-sm w-100 mt-3">
+                  Voir les badges
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section><!-- /Why Us Section -->
+
+  <!-- ======= Features Section (Mentor Quick Actions) ======= -->
+  <section id="features" class="features section">
+    <div class="container">
+      <div class="row gy-4">
+
+        <div class="col-lg-3 col-md-4" data-aos="fade-up" data-aos-delay="100">
+          <div class="features-item rounded-2">
+            <h3><a href="{% url 'dictation:start' %}" class="stretched-link">Dictée Standard</a></h3>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-4" data-aos="fade-up" data-aos-delay="150">
+          <div class="features-item rounded-2">
+            <h3><a href="{% url 'dictation:start' %}?mode=cloze" class="stretched-link">Mode Guidé (Trous)</a></h3>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-4" data-aos="fade-up" data-aos-delay="200">
+          <div class="features-item rounded-2">
+            <h3><a href="{% url 'dictation:start' %}?mode=challenge" class="stretched-link">Mode Défi Rapide</a></h3>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-4" data-aos="fade-up" data-aos-delay="250">
+          <div class="features-item rounded-2">
+            <h3><a href="{% url 'profile' %}" class="stretched-link">Choix de la Voix Vocale</a></h3>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section><!-- /Features Section -->
+
+  <!-- ======= Recent Dictations Section (Mentor Courses Style) ======= -->
+  <section id="courses" class="courses section">
+    <div class="container section-title" data-aos="fade-up">
+      <h2>Activité récente</h2>
+      <p>Vos dernières dictées</p>
+    </div>
+
+    <div class="container">
+      {% if recent_submissions %}
+        <div class="row gy-4">
+          {% for sub in recent_submissions %}
+            <div class="col-lg-4 col-md-6 d-flex align-items-stretch" data-aos="zoom-in" data-aos-delay="100">
+              <div class="course-item w-100 d-flex flex-column justify-content-between">
+                <div class="course-content">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="category">Niveau {{ sub.session.text.level.code }}</p>
+                    <p class="price {% if sub.validated %}text-success{% else %}text-danger{% endif %}">
+                      {{ sub.score|floatformat:0 }} %
+                    </p>
+                  </div>
+
+                  <h3><a href="{% url 'dictation:result' sub.session.pk %}">{{ sub.session.text.title }}</a></h3>
+                  <p class="description">
+                    Thème : {{ sub.session.text.theme|default:"Général" }} · {{ sub.session.text.word_count }} mots ·
+                    {% if sub.validated %}Validé{% else %}À retravailler{% endif %}
+                  </p>
+                </div>
+
+                <div class="course-content pt-0">
+                  <div class="trainer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'dictation:result' sub.session.pk %}" class="fw-bold text-success small">
+                      Voir la correction
+                    </a>
+                    <a href="{% url 'dictation:start' %}?text={{ sub.session.text.pk }}" class="text-secondary small">
+                      Refaire
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="mentor-card text-center py-5">
+          <h4>Aucune dictée enregistrée pour le moment</h4>
+          <p class="text-muted mb-3">Lancez votre première session pour obtenir votre score et votre correction détaillée.</p>
+          <a href="{% url 'dictation:start' %}" class="btn-mentor">Commencer ma première dictée</a>
+        </div>
+      {% endif %}
+    </div>
+  </section><!-- /Courses Section -->
+
+{% endblock %}

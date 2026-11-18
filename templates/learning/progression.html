@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Progression par Niveaux CECRL{% endblock %}
+{% block body_class %}courses-page{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Parcours CECRL par Niveaux</h1>
+            <p class="mb-0">De débutant (A1) à avancé (C1). Validez les textes requis et maintenez la moyenne exigée pour débloquer l'examen de passage.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li class="current">Niveaux CECRL</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="courses p-0">
+    <div class="row gy-4">
+      {% for row in rows %}
+        <div class="col-lg-6 d-flex align-items-stretch" data-aos="fade-up">
+          <div class="course-item w-100 d-flex flex-column justify-content-between p-4 {% if row.is_current %}border-success border-2 shadow{% endif %}">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="category">Niveau {{ row.level.code }}</span>
+                <span class="badge rounded-pill px-3 py-2 {% if row.raw_status == 'validated' %}bg-success{% elif row.raw_status == 'exam' %}bg-warning text-dark{% elif row.is_current %}bg-primary{% else %}bg-secondary{% endif %}">
+                  {{ row.status }}
+                </span>
+              </div>
+
+              <h3 class="mb-1">{{ row.level.name }}</h3>
+              <p class="description mb-3">
+                Textes de {{ row.level.min_words }} à {{ row.level.max_words }} mots · Seuil minimum par texte : <strong>{{ row.level.text_pass_score }}%</strong> · Moyenne requise : <strong>{{ row.level.required_average }}%</strong>
+              </p>
+
+              {% if row.raw_status != 'locked' %}
+                <div class="p-3 rounded bg-light border mb-3">
+                  <div class="d-flex justify-content-between small fw-bold mb-1">
+                    <span>Textes validés</span>
+                    <span>{{ row.stats.validated_count }} / {{ row.stats.required_count }}</span>
+                  </div>
+                  <div class="progress-mentor mb-2">
+                    <div class="progress-bar" data-progress-width="{% widthratio row.stats.validated_count row.stats.required_count 100 %}"></div>
+                  </div>
+                  <div class="d-flex justify-content-between small text-muted">
+                    <span>Moyenne actuelle :</span>
+                    <strong class="{% if row.stats.average >= row.level.required_average %}text-success{% else %}text-dark{% endif %}">
+                      {{ row.stats.average }}% (requis : {{ row.level.required_average }}%)
+                    </strong>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="trainer d-flex justify-content-between align-items-center pt-3">
+              {% if row.is_current %}
+                <a href="{% url 'dictation:start' %}" class="btn-mentor w-100">
+                  {% if row.raw_status == 'exam' %}
+                    Passer l'examen de passage
+                  {% else %}
+                    Continuer ce niveau
+                  {% endif %}
+                </a>
+              {% elif row.raw_status == 'validated' %}
+                <span class="fw-bold text-success">Niveau acquis</span>
+              {% else %}
+                <span class="text-muted small">Verrouillé (validez le niveau précédent)</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

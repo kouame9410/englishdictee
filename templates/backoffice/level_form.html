@@ -1,0 +1,84 @@
+{% extends "backoffice/base_admin.html" %}
+{% block admin_title %}{% if is_edit %}Modifier le niveau {{ level_obj.code }}{% else %}Nouveau niveau CECRL{% endif %}{% endblock %}
+{% block admin_heading %}{% if is_edit %}Modifier le niveau {{ level_obj.code }} — {{ level_obj.name }}{% else %}Créer un niveau CECRL{% endif %}{% endblock %}
+{% block admin_breadcrumb %}
+  <li><a href="{% url 'backoffice:levels' %}">Niveaux CECRL</a></li>
+  <li class="current">{% if is_edit %}{{ level_obj.code }}{% else %}Nouveau niveau{% endif %}</li>
+{% endblock %}
+
+{% block admin_content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mentor-card">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+              {{ form.code }}
+              {% for error in form.code.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+              {{ form.name }}
+              {% for error in form.name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.order.id_for_label }}">{{ form.order.label }}</label>
+              {{ form.order }}
+              {% for error in form.order.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.min_words.id_for_label }}">{{ form.min_words.label }}</label>
+              {{ form.min_words }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.max_words.id_for_label }}">{{ form.max_words.label }}</label>
+              {{ form.max_words }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.text_pass_score.id_for_label }}">{{ form.text_pass_score.label }}</label>
+              {{ form.text_pass_score }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.required_texts.id_for_label }}">{{ form.required_texts.label }}</label>
+              {{ form.required_texts }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.required_average.id_for_label }}">{{ form.required_average.label }}</label>
+              {{ form.required_average }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.average_window.id_for_label }}">{{ form.average_window.label }}</label>
+              {{ form.average_window }}
+            </div>
+
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check p-3 rounded border bg-light w-100">
+                {{ form.requires_exam }}
+                <label class="form-check-label fw-bold ms-2" for="{{ form.requires_exam.id_for_label }}">
+                  {{ form.requires_exam.label }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <a href="{% url 'backoffice:levels' %}" class="btn-mentor-outline">Annuler</a>
+            <button type="submit" class="btn-mentor">Enregistrer le niveau</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

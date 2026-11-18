@@ -1,0 +1,98 @@
+{% extends "backoffice/base_admin.html" %}
+{% block admin_title %}Gestion des Utilisateurs{% endblock %}
+{% block admin_heading %}Gestion des Utilisateurs & Apprenants{% endblock %}
+{% block admin_breadcrumb %}<li class="current">Utilisateurs</li>{% endblock %}
+
+{% block admin_content %}
+  <div class="mentor-card">
+    <form method="get" class="row g-2 align-items-center mb-4">
+      <div class="col-md-4">
+        <select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">Tous les rôles</option>
+          {% for code, label in roles %}
+            <option value="{{ code }}" {% if selected_role == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-5">
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Rechercher par nom d'utilisateur, e-mail, nom...">
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">Filtrer</button>
+        {% if selected_role or q %}
+          <a href="{% url 'backoffice:users' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Réinitialiser</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Utilisateur</th>
+            <th>E-mail</th>
+            <th class="text-center">Rôle</th>
+            <th class="text-center">Niveau actuel</th>
+            <th class="text-center">Dictées</th>
+            <th class="text-center">Points XP</th>
+            <th class="text-center">Statut</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in users_rows %}
+            <tr>
+              <td>
+                <div class="fw-bold text-dark">{{ row.user_obj.username }}</div>
+                <small class="text-muted">
+                  {{ row.user_obj.first_name }} {{ row.user_obj.last_name }}
+                  {% if row.user_obj.country %}· {{ row.user_obj.country }}{% endif %}
+                </small>
+              </td>
+              <td class="small">{{ row.user_obj.email }}</td>
+              <td class="text-center">
+                <span class="badge {% if row.user_obj.role == 'admin' or row.user_obj.is_staff %}bg-dark{% else %}bg-light text-dark border{% endif %}">
+                  {{ row.user_obj.get_role_display }}
+                </span>
+              </td>
+              <td class="text-center">
+                {% if row.level %}
+                  <span class="badge-mentor">{{ row.level.code }}</span>
+                {% else %}
+                  <span class="badge bg-success">Terminé</span>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ row.sub_count }}</td>
+              <td class="text-center fw-bold font-monospace">{{ row.user_obj.xp }} XP</td>
+              <td class="text-center">
+                {% if row.user_obj.is_active %}
+                  <span class="badge bg-success-subtle text-success">Actif</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger">Désactivé</span>
+                {% endif %}
+              </td>
+              <td class="text-end text-nowrap">
+                <a href="{% url 'backoffice:user_edit' row.user_obj.pk %}" class="btn btn-sm btn-outline-success rounded-pill px-3 me-1">
+                  Modifier
+                </a>
+                {% if row.user_obj.pk != user.pk %}
+                  <form method="post" action="{% url 'backoffice:user_delete' row.user_obj.pk %}" class="d-inline" onsubmit="return confirm('Supprimer définitivement cet utilisateur et tout son historique ?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                      Supprimer
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">Aucun utilisateur trouvé.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

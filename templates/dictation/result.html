@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Résultats de la dictée{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Résultat & Correction Détaillée</h1>
+            <p class="mb-0">{{ session.text.title }} — Niveau {{ session.text.level.code }} ({{ session.text.word_count }} mots)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li><a href="{% url 'dictation:history' %}">Historique</a></li>
+          <li class="current">Correction</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      {% if level_up %}
+        <div class="alert alert-warning border-warning shadow-sm p-4 mb-4">
+          <h4 class="fw-bold mb-1">Niveau supérieur débloqué !</h4>
+          <p class="mb-0">Félicitations, vous passez au niveau <strong>{{ new_level }}</strong>.</p>
+        </div>
+      {% elif exam_ready %}
+        <div class="alert alert-info p-3 mb-4">
+          <div class="fw-semibold">Conditions validées ! Vous pouvez désormais passer l'examen de passage de niveau.</div>
+        </div>
+      {% endif %}
+
+      <!-- Résumé du Score -->
+      <div class="mentor-card mb-4">
+        <div class="row align-items-center gy-3">
+          <div class="col-md-7">
+            <span class="badge {% if submission.validated %}bg-success{% else %}bg-warning text-dark{% endif %} px-3 py-2 mb-2">
+              {% if submission.validated %}
+                Texte validé (seuil : {{ pass_score }} %)
+              {% else %}
+                Seuil de {{ pass_score }} % non atteint
+              {% endif %}
+            </span>
+            <h2 class="h3 fw-bold mb-1">{{ session.text.title }}</h2>
+            <p class="text-muted small mb-0">
+              Niveau {{ session.text.level.code }} · {{ session.text.word_count }} mots · Réécoutes : {{ session.replay_count }}
+              {% if session.status == "expired" %} · <em>Temps écoulé (envoi automatique)</em>{% endif %}
+            </p>
+          </div>
+
+          <div class="col-md-5 d-flex justify-content-md-end gap-3">
+            <div class="text-center p-3 rounded border bg-light" style="min-width: 130px;">
+              <div class="display-6 fw-bold {% if submission.score >= pass_score %}text-success{% else %}text-danger{% endif %}">
+                {{ submission.score|floatformat:0 }} %
+              </div>
+              <small class="text-uppercase fw-bold text-muted">Score final</small>
+            </div>
+
+            <div class="text-center p-3 rounded border" style="background: #fff8e6; border-color: #fde68a; min-width: 110px;">
+              <div class="fs-2 fw-bold text-warning-emphasis">+{{ submission.xp_gained }}</div>
+              <small class="text-uppercase fw-bold text-warning-emphasis">XP Gagné</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if suggest_lower and lower_level %}
+        <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+          <span>Ce niveau semble difficile. Vous pouvez revenir au niveau <strong>{{ lower_level.code }}</strong> pour consolider vos bases.</span>
+          <form method="post" action="{% url 'learning:step_down' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-warning fw-bold">Passer en {{ lower_level.code }}</button>
+          </form>
+        </div>
+      {% endif %}
+
+      <!-- Comparaison mot à mot -->
+      <div class="mentor-card mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-3 gap-2">
+          <h4 class="h5 fw-bold mb-0">Comparaison & Correction mot à mot</h4>
+          <div class="d-flex gap-3 small">
+            <span class="w-ok">Juste</span>
+            <span class="w-spelling">Faute légère</span>
+            <span class="w-wrong">Erreur / Oubli</span>
+          </div>
+        </div>
+
+        <div class="p-4 rounded bg-light border fs-5 lh-lg mb-3">
+          {{ reference_html }}
+        </div>
+
+        <div class="small text-muted">
+          <strong>Votre saisie brute :</strong>
+          <div class="p-3 rounded bg-white border font-monospace mt-1">
+            {{ submission.typed_text|linebreaksbr|default:"(aucun texte saisi)" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau détaillé des erreurs -->
+      {% if errors %}
+        <div class="mentor-card mb-4">
+          <h4 class="h5 fw-bold mb-3">Détail des erreurs identifiées ({{ errors|length }})</h4>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Catégorie</th>
+                  <th>Attendu</th>
+                  <th>Votre réponse</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in errors %}
+                  <tr>
+                    <td class="fw-semibold">{{ e.label }}</td>
+                    <td class="fw-bold text-success">{{ e.expected|default:"—" }}</td>
+                    <td class="font-monospace text-danger">{{ e.typed|default:"—" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Explications Pédagogiques -->
+      {% if feedback %}
+        <div class="mentor-card mb-4" style="border-left: 5px solid var(--accent-color);">
+          <h4 class="h5 fw-bold mb-3">Bilan pédagogique & Règles grammaticales</h4>
+
+          <div class="row g-3 mb-3">
+            {% if feedback.strengths_fr %}
+              <div class="col-md-4">
+                <div class="p-3 rounded h-100" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                  <strong class="d-block text-success small text-uppercase mb-1">Points forts</strong>
+                  <p class="small mb-0">{{ feedback.strengths_fr }}</p>
+                </div>
+              </div>
+            {% endif %}
+            {% if feedback.to_improve_fr %}
+              <div class="col-md-4">
+                <div class="p-3 rounded h-100" style="background: #fffbeb; border: 1px solid #fde68a;">
+                  <strong class="d-block text-warning-emphasis small text-uppercase mb-1">À travailler</strong>
+                  <p class="small mb-0">{{ feedback.to_improve_fr }}</p>
+                </div>
+              </div>
+            {% endif %}
+            {% if feedback.advice_fr %}
+              <div class="col-md-4">
+                <div class="p-3 rounded h-100" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                  <strong class="d-block text-primary small text-uppercase mb-1">Conseil du prof</strong>
+                  <p class="small mb-0">{{ feedback.advice_fr }}</p>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          {% if feedback.error_explanations %}
+            <h6 class="fw-bold text-uppercase small text-muted mt-3 mb-2">Règles & Astuces sur vos fautes</h6>
+            <div class="list-group">
+              {% for item in feedback.error_explanations %}
+                <div class="list-group-item">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <strong class="text-dark">{{ item.expected|default:item.typed }}</strong>
+                    <span class="badge bg-secondary">{{ item.category }}</span>
+                  </div>
+                  <p class="small mb-1">{{ item.explanation_fr }}</p>
+                  {% if item.rule_fr %}
+                    <small class="text-muted fst-italic">Règle : {{ item.rule_fr }}</small>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <!-- Boutons d'action -->
+      <div class="d-flex flex-wrap gap-2">
+        {% if submission.validated %}
+          <a href="{% url 'dictation:start' %}" class="btn-mentor">
+            Texte suivant
+          </a>
+        {% else %}
+          <a href="{% url 'dictation:start' %}?text={{ session.text.pk }}" class="btn-mentor">
+            Refaire ce texte
+          </a>
+          <a href="{% url 'dictation:start' %}?text={{ session.text.pk }}&mode=cloze" class="btn-mentor-outline">
+            Mode guidé
+          </a>
+        {% endif %}
+        <a href="{% url 'learning:vocabulary' %}" class="btn-mentor-outline">
+          Voir mon vocabulaire
+        </a>
+        <a href="{% url 'home' %}" class="btn-mentor-outline">
+          Accueil
+        </a>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

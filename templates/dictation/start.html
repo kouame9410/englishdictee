@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}Configurer la dictée{% endblock %}
+{% block body_class %}course-details-page{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Paramétrez votre séance de dictée</h1>
+            <p class="mb-0">Choisissez votre mode d'entraînement, votre accent, votre voix vocale préférée et le rythme de lecture.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li class="current">Configuration de la dictée</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if not level %}
+    <div class="mentor-card text-center py-5">
+      <h3>Tous les niveaux sont complétés !</h3>
+      <p class="text-muted">Vous avez validé l'ensemble du parcours CECRL disponible.</p>
+      <a href="{% url 'learning:progression' %}" class="btn-mentor mt-2">Voir mon récapitulatif</a>
+    </div>
+  {% elif not text %}
+    <div class="mentor-card text-center py-5">
+      <h3>Banque de textes vide</h3>
+      <p class="text-muted">Aucun texte n'est disponible pour le niveau {{ level.name }}.</p>
+      <a href="{% url 'home' %}" class="btn-mentor mt-2">Retour à l'accueil</a>
+    </div>
+  {% else %}
+    <div class="courses-course-details p-0">
+      <div class="row gy-4">
+
+        <!-- Left Column: Form Configuration -->
+        <div class="col-lg-8">
+          <div class="mentor-card">
+            <h3 class="mt-0">Paramètres d'écoute & d'exercice</h3>
+
+            <form method="post" id="start-dictation-form">
+              {% csrf_token %}
+              <input type="hidden" name="text" value="{{ text.pk }}">
+
+              <!-- Mode d'exercice -->
+              <div class="mb-4">
+                <label class="form-label fw-bold text-dark">1. Mode d'exercice</label>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="mode-option">
+                      <input type="radio" name="mode" value="classic" class="form-check-input me-2" {% if not form.mode.value or form.mode.value == 'classic' %}checked{% endif %}>
+                      <strong class="text-dark">Standard</strong>
+                      <small class="d-block text-muted mt-1">Transcrivez l'intégralité du texte entendu.</small>
+                    </label>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="mode-option">
+                      <input type="radio" name="mode" value="cloze" class="form-check-input me-2" {% if form.mode.value == 'cloze' %}checked{% endif %}>
+                      <strong class="text-dark">Guidé / Trous</strong>
+                      <small class="d-block text-muted mt-1">1 mot sur 3 est masqué pour vous guider.</small>
+                    </label>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="mode-option">
+                      <input type="radio" name="mode" value="challenge" class="form-check-input me-2" {% if form.mode.value == 'challenge' %}checked{% endif %}>
+                      <strong class="text-dark">Défi rapide</strong>
+                      <small class="d-block text-muted mt-1">Chronomètre serré pour tester vos réflexes.</small>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Choix de la voix & de l'accent -->
+              <div class="p-4 rounded-3 mb-4" style="background: #f4fbf6; border: 1px solid #ccebd6;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                  <span class="fw-bold text-dark">
+                    2. Choix de la voix vocale & de l'accent
+                  </span>
+                  <button type="button" id="btn-test-voice" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                    Tester cette voix
+                  </button>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold" for="id_accent">Accent souhaité</label>
+                    <select name="accent" id="id_accent" class="form-select">
+                      {% for val, lbl in form.fields.accent.choices %}
+                        <option value="{{ val }}" {% if form.accent.value == val %}selected{% endif %}>{{ lbl }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold" for="id_voice_name">Voix vocale</label>
+                    <select name="voice_name" id="id_voice_name" data-saved="{{ form.voice_name.value|default:'' }}" class="form-select">
+                      <option value="">Automatique (selon l'accent choisi)</option>
+                    </select>
+                  </div>
+                </div>
+                <small class="text-muted d-block mt-2">
+                  Votre choix est mémorisé pour vos prochaines dictées et peut être changé à tout moment pendant la séance.
+                </small>
+              </div>
+
+              <!-- Paramètres de rythme -->
+              <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-uppercase" for="{{ form.speed.id_for_label }}">Vitesse de voix</label>
+                  <select name="speed" id="{{ form.speed.id_for_label }}" class="form-select">
+                    {% for val, lbl in form.fields.speed.choices %}
+                      <option value="{{ val }}" {% if form.speed.value == val %}selected{% endif %}>{{ lbl }} ({{ val }}×)</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-uppercase" for="{{ form.pause_seconds.id_for_label }}">Pause entre phrases (sec)</label>
+                  <input type="number" min="2" max="15" name="pause_seconds" id="{{ form.pause_seconds.id_for_label }}" value="{{ form.pause_seconds.value|default:5 }}" class="form-control">
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-uppercase" for="{{ form.repeats_per_segment.id_for_label }}">Lectures par segment</label>
+                  <select name="repeats_per_segment" id="{{ form.repeats_per_segment.id_for_label }}" class="form-select">
+                    <option value="1" {% if form.repeats_per_segment.value == 1 %}selected{% endif %}>1 fois (normal)</option>
+                    <option value="2" {% if form.repeats_per_segment.value == 2 %}selected{% endif %}>2 fois d'affilée</option>
+                    <option value="3" {% if form.repeats_per_segment.value == 3 %}selected{% endif %}>3 fois (débutant)</option>
+                  </select>
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-uppercase" for="{{ form.duration_minutes.id_for_label }}">Durée maximale (min)</label>
+                  <input type="number" min="1" max="15" name="duration_minutes" id="{{ form.duration_minutes.id_for_label }}" value="{{ form.duration_minutes.value|default:5 }}" class="form-control">
+                </div>
+              </div>
+
+              <button type="submit" class="btn-mentor w-100 py-3 fs-6">
+                Commencer la dictée
+              </button>
+            </form>
+
+            <form method="post" action="{% url 'dictation:skip_text' text.pk %}" class="text-center mt-3 pt-3 border-top">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-secondary text-decoration-none" onclick="return confirm('Passer ce texte ? Vous ne gagnerez pas d\'XP bonus.');">
+                Passer ce texte et en charger un autre
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Column: Mentor Course Info Sidebar -->
+        <div class="col-lg-4">
+          <div class="mentor-card">
+            <h3 class="mt-0">{{ text.title }}</h3>
+            <p class="text-muted small mb-3">Texte sélectionné automatiquement selon votre niveau et vos centres d'intérêt.</p>
+
+            <div class="course-info d-flex justify-content-between align-items-center rounded">
+              <h5>Niveau CECRL</h5>
+              <p><span class="badge bg-success">{{ level.code }} — {{ level.name }}</span></p>
+            </div>
+
+            <div class="course-info d-flex justify-content-between align-items-center rounded">
+              <h5>Longueur</h5>
+              <p>{{ text.word_count }} mots</p>
+            </div>
+
+            <div class="course-info d-flex justify-content-between align-items-center rounded">
+              <h5>Thème</h5>
+              <p>{{ text.theme|default:"Général" }}</p>
+            </div>
+
+            <div class="course-info d-flex justify-content-between align-items-center rounded">
+              <h5>Progression niveau</h5>
+              <p>{{ stats.validated_count }} / {{ stats.required_count }} validés</p>
+            </div>
+
+            <div class="course-info d-flex justify-content-between align-items-center rounded mb-0">
+              <h5>Moyenne actuelle</h5>
+              <p>{{ stats.average }}%</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  {% endif %}
+
+<script>
+(function () {
+  var synth = window.speechSynthesis;
+  var voiceSelect = document.getElementById("id_voice_name");
+  var accentSelect = document.getElementById("id_accent");
+  var speedSelect = document.getElementById("id_speed");
+  var testBtn = document.getElementById("btn-test-voice");
+  if (!synth || !voiceSelect) return;
+
+  var ACCENT_MAP = { us: "en-us", uk: "en-gb", au: "en-au", in: "en-in" };
+  var savedVoice = voiceSelect.getAttribute("data-saved") || "";
+  try {
+    if (!savedVoice) savedVoice = localStorage.getItem("dictee-preferred-voice") || "";
+  } catch (e) {}
+
+  function populateVoices() {
+    var all = synth.getVoices() || [];
+    var enVoices = all.filter(function (v) {
+      return v.lang && v.lang.toLowerCase().indexOf("en") === 0;
+    });
+    if (!enVoices.length) enVoices = all;
+
+    var currentVal = voiceSelect.value || savedVoice;
+    voiceSelect.innerHTML = '<option value="">Automatique (selon l\'accent choisi)</option>';
+
+    enVoices.forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = v.name;
+      opt.textContent = v.name + " (" + v.lang.replace("_", "-") + ")";
+      if (v.name === currentVal) opt.selected = true;
+      voiceSelect.appendChild(opt);
+    });
+  }
+
+  populateVoices();
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = populateVoices;
+  }
+
+  voiceSelect.addEventListener("change", function () {
+    savedVoice = voiceSelect.value;
+    try { localStorage.setItem("dictee-preferred-voice", savedVoice); } catch (e) {}
+  });
+
+  if (testBtn) {
+    testBtn.addEventListener("click", function () {
+      synth.cancel();
+      var all = synth.getVoices() || [];
+      var chosenName = voiceSelect.value;
+      var accentCode = accentSelect ? accentSelect.value : "us";
+      var targetLang = ACCENT_MAP[accentCode] || "en-us";
+      var picked = null;
+
+      if (chosenName) {
+        picked = all.find(function (v) { return v.name === chosenName; }) || null;
+      }
+      if (!picked) {
+        picked = all.find(function (v) { return v.lang.replace("_", "-").toLowerCase() === targetLang; }) ||
+                 all.find(function (v) { return v.lang.toLowerCase().indexOf("en") === 0; }) || null;
+      }
+
+      var u = new SpeechSynthesisUtterance("Hello! Ready for your English dictation? Listen carefully and write what you hear.");
+      u.lang = picked ? picked.lang : "en-US";
+      if (picked) u.voice = picked;
+      u.rate = speedSelect ? parseFloat(speedSelect.value) || 1.0 : 1.0;
+      synth.speak(u);
+    });
+  }
+})();
+</script>
+{% endblock %}

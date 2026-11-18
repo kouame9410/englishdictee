@@ -1,0 +1,176 @@
+{% extends "backoffice/base_admin.html" %}
+{% block admin_title %}Tableau de bord Administration{% endblock %}
+{% block admin_heading %}Tableau de bord d'Administration{% endblock %}
+{% block admin_breadcrumb %}<li class="current">Vue d'ensemble</li>{% endblock %}
+
+{% block admin_content %}
+  <!-- Indicateurs globaux -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+      <div class="mentor-card text-center h-100">
+        <div class="display-6 fw-bold text-success">{{ total_users }}</div>
+        <div class="small fw-bold text-uppercase text-muted mt-1">Utilisateurs inscrits</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="mentor-card text-center h-100">
+        <div class="display-6 fw-bold text-dark">{{ total_texts }}</div>
+        <div class="small fw-bold text-uppercase text-muted mt-1">Textes en banque</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="mentor-card text-center h-100">
+        <div class="display-6 fw-bold text-dark">{{ total_submissions }}</div>
+        <div class="small fw-bold text-uppercase text-muted mt-1">Dictées corrigées</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="mentor-card text-center h-100">
+        <div class="display-6 fw-bold text-success">{{ avg_score }} %</div>
+        <div class="small fw-bold text-uppercase text-muted mt-1">Score moyen ({{ pass_rate }} % validés)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Synthèse par Niveau CECRL -->
+  <div class="mentor-card mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="h5 fw-bold mb-0">Répartition et règles par niveau CECRL</h3>
+        <small class="text-muted">Nombre de textes disponibles, apprenants actifs et seuils de validation.</small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'backoffice:text_create' %}" class="btn-mentor btn-sm">Ajouter un texte</a>
+        <a href="{% url 'backoffice:levels' %}" class="btn-mentor-outline btn-sm">Configurer les niveaux</a>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Niveau</th>
+            <th>Intitulé</th>
+            <th class="text-center">Textes disponibles</th>
+            <th class="text-center">Apprenants actifs</th>
+            <th class="text-center">Niveau validé</th>
+            <th class="text-center">Seuil / Moyenne</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in levels_summary %}
+            <tr>
+              <td><span class="badge-mentor">{{ row.level.code }}</span></td>
+              <td class="fw-semibold">{{ row.level.name }}</td>
+              <td class="text-center fw-bold">{{ row.text_count }}</td>
+              <td class="text-center">{{ row.active_learners }}</td>
+              <td class="text-center text-success fw-semibold">{{ row.validated_learners }}</td>
+              <td class="text-center small text-muted">
+                {{ row.level.text_pass_score }} % min · {{ row.level.required_average }} % moy ({{ row.level.required_texts }} textes)
+              </td>
+              <td class="text-end">
+                <a href="{% url 'backoffice:level_edit' row.level.pk %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                  Modifier
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Dernières dictées soumises -->
+    <div class="col-lg-7">
+      <div class="mentor-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h5 fw-bold mb-0">Dernières copies soumises</h3>
+          <a href="{% url 'backoffice:submissions' %}" class="small fw-bold text-success">Tout voir</a>
+        </div>
+        {% if recent_submissions %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Apprenant</th>
+                  <th>Texte</th>
+                  <th class="text-center">Score</th>
+                  <th class="text-end">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sub in recent_submissions %}
+                  <tr>
+                    <td class="small text-muted text-nowrap">{{ sub.created_at|date:"d/m H:i" }}</td>
+                    <td class="fw-semibold">{{ sub.session.user.username }}</td>
+                    <td>
+                      <span class="badge bg-light text-dark border me-1">{{ sub.session.text.level.code }}</span>
+                      {{ sub.session.text.title }}
+                    </td>
+                    <td class="text-center fw-bold {% if sub.validated %}text-success{% else %}text-danger{% endif %}">
+                      {{ sub.score|floatformat:0 }} %
+                    </td>
+                    <td class="text-end">
+                      {% if sub.validated %}
+                        <span class="badge bg-success-subtle text-success">Validé</span>
+                      {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis">À revoir</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">Aucune copie enregistrée pour le moment.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Derniers utilisateurs inscrits -->
+    <div class="col-lg-5">
+      <div class="mentor-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h5 fw-bold mb-0">Derniers inscrits</h3>
+          <a href="{% url 'backoffice:users' %}" class="small fw-bold text-success">Gérer les comptes</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Utilisateur</th>
+                <th>Rôle</th>
+                <th class="text-end">XP</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in recent_users %}
+                <tr>
+                  <td>
+                    <div class="fw-bold">{{ u.username }}</div>
+                    <small class="text-muted">{{ u.email }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark border">{{ u.get_role_display }}</span>
+                  </td>
+                  <td class="text-end fw-semibold font-monospace">{{ u.xp }}</td>
+                  <td class="text-end">
+                    <a href="{% url 'backoffice:user_edit' u.pk %}" class="btn btn-sm btn-outline-secondary rounded-pill px-2">
+                      Éditer
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

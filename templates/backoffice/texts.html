@@ -1,0 +1,108 @@
+{% extends "backoffice/base_admin.html" %}
+{% block admin_title %}Gestion des Textes de Dictée{% endblock %}
+{% block admin_heading %}Gestion des Textes de Dictée{% endblock %}
+{% block admin_breadcrumb %}<li class="current">Textes de dictée</li>{% endblock %}
+
+{% block admin_content %}
+  <!-- Génération rapide & Création manuelle -->
+  <div class="mentor-card mb-4">
+    <div class="row align-items-end g-3">
+      <div class="col-lg-8">
+        <h3 class="h6 fw-bold text-uppercase text-muted mb-2">Générer automatiquement un nouveau texte validé</h3>
+        <form method="post" action="{% url 'backoffice:text_generate' %}" class="row g-2 align-items-center">
+          {% csrf_token %}
+          <div class="col-sm-4">
+            <select name="level_id" class="form-select form-select-sm" required>
+              {% for lvl in levels %}
+                <option value="{{ lvl.pk }}">Niveau {{ lvl.code }} — {{ lvl.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-5">
+            <input type="text" name="theme" class="form-control form-control-sm" placeholder="Thème (ex: Business, Travel, Technology)">
+          </div>
+          <div class="col-sm-3">
+            <button type="submit" class="btn-mentor-outline btn-sm w-100">Générer un texte</button>
+          </div>
+        </form>
+      </div>
+      <div class="col-lg-4 text-lg-end">
+        <a href="{% url 'backoffice:text_create' %}" class="btn-mentor btn-sm">
+          Créer un texte manuellement
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et Liste des textes -->
+  <div class="mentor-card">
+    <form method="get" class="row g-2 align-items-center mb-4">
+      <div class="col-md-4">
+        <select name="level" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">Tous les niveaux CECRL</option>
+          {% for lvl in levels %}
+            <option value="{{ lvl.code }}" {% if selected_level == lvl.code %}selected{% endif %}>
+              {{ lvl.code }} — {{ lvl.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-5">
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Rechercher par titre, thème ou contenu...">
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">Filtrer</button>
+        {% if selected_level or q %}
+          <a href="{% url 'backoffice:texts' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Réinitialiser</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Niveau</th>
+            <th>Titre & Extrait</th>
+            <th>Thème</th>
+            <th class="text-center">Mots</th>
+            <th class="text-center">Accent</th>
+            <th class="text-center">Sessions</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in texts %}
+            <tr>
+              <td><span class="badge-mentor">{{ t.level.code }}</span></td>
+              <td>
+                <div class="fw-bold text-dark">{{ t.title }}</div>
+                <small class="text-muted">{{ t.content|truncatechars:85 }}</small>
+              </td>
+              <td><span class="badge bg-light text-dark border">{{ t.theme|default:"Général" }}</span></td>
+              <td class="text-center font-monospace">{{ t.word_count }}</td>
+              <td class="text-center text-uppercase small fw-bold">{{ t.accent }}</td>
+              <td class="text-center">{{ t.attempts_count }}</td>
+              <td class="text-end text-nowrap">
+                <a href="{% url 'backoffice:text_edit' t.pk %}" class="btn btn-sm btn-outline-success rounded-pill px-3 me-1">
+                  Modifier
+                </a>
+                <form method="post" action="{% url 'backoffice:text_delete' t.pk %}" class="d-inline" onsubmit="return confirm('Supprimer définitivement ce texte ?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                    Supprimer
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">Aucun texte trouvé pour ces critères.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

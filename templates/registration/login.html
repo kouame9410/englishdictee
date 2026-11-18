@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Connexion à votre espace</h1>
+            <p class="mb-0">Reprenez votre entraînement, votre série quotidienne et vos dictées personnalisées.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li class="current">Connexion</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-5 col-md-7">
+      <div class="mentor-card">
+        <div class="text-center mb-4">
+          <h3 class="h4 fw-bold">Bon retour !</h3>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger small fw-semibold">
+              Identifiants incorrects. Veuillez vérifier votre nom d'utilisateur et votre mot de passe.
+            </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="{{ form.username.id_for_label }}" class="form-label small fw-bold text-uppercase">Nom d'utilisateur ou e-mail</label>
+            <input type="text" name="username" id="{{ form.username.id_for_label }}" required autocomplete="username" class="form-control py-2">
+          </div>
+
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="{{ form.password.id_for_label }}" class="form-label small fw-bold text-uppercase mb-0">Mot de passe</label>
+              <a href="{% url 'password_reset' %}" class="small">Mot de passe oublié ?</a>
+            </div>
+            <input type="password" name="password" id="{{ form.password.id_for_label }}" required autocomplete="current-password" class="form-control py-2">
+          </div>
+
+          <button type="submit" class="btn-mentor w-100 py-3">
+            Se connecter
+          </button>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top small text-muted">
+          Pas encore de compte ?
+          <a href="{% url 'signup' %}" class="fw-bold">Créer un compte gratuitement</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

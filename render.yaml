@@ -1,0 +1,13 @@
+# Blueprint Render : service web Django avec SQLite (premier test en production).
+services:
+  - type: web
+    name: dictee-anglais
+    runtime: python
+    plan: free
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.12.3

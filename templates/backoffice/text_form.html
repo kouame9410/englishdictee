@@ -1,0 +1,72 @@
+{% extends "backoffice/base_admin.html" %}
+{% block admin_title %}{% if is_edit %}Modifier le texte{% else %}Nouveau texte de dictée{% endif %}{% endblock %}
+{% block admin_heading %}{% if is_edit %}Modifier le texte : {{ text_obj.title }}{% else %}Créer un nouveau texte de dictée{% endif %}{% endblock %}
+{% block admin_breadcrumb %}
+  <li><a href="{% url 'backoffice:texts' %}">Textes de dictée</a></li>
+  <li class="current">{% if is_edit %}Modification{% else %}Nouveau texte{% endif %}</li>
+{% endblock %}
+
+{% block admin_content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mentor-card">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+              {{ form.title }}
+              {% for error in form.title.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.level.id_for_label }}">{{ form.level.label }}</label>
+              {{ form.level }}
+              {% for error in form.level.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.theme.id_for_label }}">{{ form.theme.label }}</label>
+              {{ form.theme }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.accent.id_for_label }}">{{ form.accent.label }}</label>
+              {{ form.accent }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.origin.id_for_label }}">{{ form.origin.label }}</label>
+              {{ form.origin }}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
+              {{ form.content }}
+              <small class="text-muted">Le nombre de mots sera calculé automatiquement lors de l'enregistrement.</small>
+              {% for error in form.content.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.keywords_csv.id_for_label }}">{{ form.keywords_csv.label }}</label>
+              {{ form.keywords_csv }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase" for="{{ form.audio_url.id_for_label }}">{{ form.audio_url.label }}</label>
+              {{ form.audio_url }}
+              {% for error in form.audio_url.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <a href="{% url 'backoffice:texts' %}" class="btn-mentor-outline">Annuler</a>
+            <button type="submit" class="btn-mentor">Enregistrer le texte</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

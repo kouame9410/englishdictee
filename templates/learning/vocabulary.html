@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Carnet de Vocabulaire (SRS){% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Carnet de Vocabulaire (SRS)</h1>
+            <p class="mb-0">Vos erreurs de dictée sont enregistrées automatiquement et programmées selon la répétition espacée.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li class="current">Vocabulaire SRS ({{ due_count }} à réviser)</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if entries %}
+    <div class="row gy-4">
+      {% for entry in entries %}
+        <div class="col-md-6" data-aos="fade-up">
+          <div class="mentor-card h-100 d-flex flex-column justify-content-between {% if not entry.next_review or entry.next_review <= today %}vocab-card-due{% else %}vocab-card-ok{% endif %}">
+            <div>
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div>
+                  <h3 class="h4 fw-bold mb-0">{{ entry.word }}</h3>
+                  {% if entry.translation_fr %}
+                    <span class="text-success fw-semibold">{{ entry.translation_fr }}</span>
+                  {% endif %}
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-light text-dark border">{{ entry.error_count }} faute{{ entry.error_count|pluralize }}</span>
+                  <small class="d-block text-muted mt-1">Intervalle : {{ entry.interval_days }} j</small>
+                </div>
+              </div>
+
+              {% if entry.definition %}
+                <div class="p-2 rounded bg-light border small mb-2">
+                  <strong>Définition :</strong> {{ entry.definition }}
+                </div>
+              {% endif %}
+
+              {% if entry.example %}
+                <p class="small text-muted fst-italic border-start border-3 border-success ps-2 mb-2">
+                  « {{ entry.example }} »
+                </p>
+              {% endif %}
+            </div>
+
+            <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-2">
+              <small class="text-muted">
+                {% if entry.next_review %}
+                  Prévu le : {{ entry.next_review|date:"d/m/Y" }}
+                {% else %}
+                  À réviser maintenant
+                {% endif %}
+              </small>
+
+              <div class="d-flex gap-2">
+                <form method="post" action="{% url 'learning:vocabulary_review' entry.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="result" value="again">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                    Revoir
+                  </button>
+                </form>
+                <form method="post" action="{% url 'learning:vocabulary_review' entry.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="result" value="known">
+                  <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                    Je sais
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="mentor-card text-center py-5">
+      <h4>Votre carnet de vocabulaire est vide</h4>
+      <p class="text-muted">Chaque mot sur lequel vous faites une erreur pendant une dictée sera automatiquement ajouté ici avec sa définition et un exemple.</p>
+      <a href="{% url 'dictation:start' %}" class="btn-mentor mt-2">Faire une dictée</a>
+    </div>
+  {% endif %}
+{% endblock %}

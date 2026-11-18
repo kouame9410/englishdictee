@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dictée en cours : {{ session.text.title }}{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading py-4">
+      <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div>
+            <span class="badge bg-white text-success fw-bold mb-1">Niveau {{ session.text.level.code }}</span>
+            <h1 class="h3 mb-1">{{ session.text.title }}</h1>
+            <p class="mb-0 small opacity-75" id="player-status">Prêt. Cliquez sur « Lancer la dictée » pour démarrer le chronomètre et l'écoute.</p>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-dark text-white px-4 py-2 rounded-pill d-flex align-items-center gap-2 shadow">
+              <span id="timer" class="fs-4 fw-bold font-monospace">--:--</span>
+            </div>
+            <form method="post" action="{% url 'dictation:cancel' session.pk %}" id="cancel-session-form">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-light rounded-pill px-3 fw-semibold">
+                Quitter
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+
+      <!-- Lecteur Audio & Voix -->
+      <div class="mentor-card mb-4">
+        {% if session.text.audio_url %}
+          <div class="p-3 rounded mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2" style="background: #f4fbf6; border: 1px solid #ccebd6;">
+            <span class="small fw-bold text-success">Audio studio :</span>
+            <audio id="tts-audio" controls preload="auto" src="{{ session.text.audio_url }}" style="height: 36px;"></audio>
+          </div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <button type="button" id="btn-play" class="btn-mentor px-4 py-2">
+            Lancer la dictée
+          </button>
+          <button type="button" id="btn-repeat" class="btn-mentor-outline py-2" disabled>
+            Répéter la phrase
+          </button>
+          <button type="button" id="btn-prev" class="btn-mentor-outline py-2" disabled>
+            Phrase précédente
+          </button>
+          <button type="button" id="btn-restart" class="btn-mentor-outline py-2" disabled>
+            Recommencer
+          </button>
+
+          <label class="ms-md-auto d-inline-flex align-items-center gap-2 px-3 py-2 rounded border bg-light small fw-semibold" style="cursor: pointer;">
+            <input type="checkbox" id="chk-slow" class="form-check-input mt-0">
+            <span>Ralentir</span>
+          </label>
+        </div>
+
+        <!-- Sélecteur de voix vocale en direct -->
+        <div class="pt-3 border-top d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <label for="voice-select" class="small fw-bold text-secondary mb-0">
+            Voix vocale :
+          </label>
+          <select id="voice-select" class="form-select form-select-sm" style="max-width: 340px;">
+            <option value="">Voix par défaut ({{ config.lang }})</option>
+          </select>
+        </div>
+
+        <p id="no-speech" class="alert alert-danger small mt-3 mb-0" hidden>
+          Votre navigateur ne gère pas la synthèse vocale Web Speech API. Veuillez utiliser Chrome, Edge ou Safari.
+        </p>
+      </div>
+
+      <!-- Indice mode guidé (texte à trous) -->
+      {% if cloze_hint %}
+        <div class="mentor-card mb-4" style="background: #fffbeb; border-color: #fde68a;">
+          <h5 class="fw-bold text-warning-emphasis mb-2">Mode guidé (texte à trous)</h5>
+          <p class="font-monospace p-3 bg-white rounded border mb-2">{{ cloze_hint }}</p>
+          <small class="text-muted">Recopiez le texte intégralement ci-dessous en complétant les mots manquants.</small>
+        </div>
+      {% endif %}
+
+      <!-- Zone de saisie -->
+      <div class="mentor-card">
+        <form id="dictation-form" method="post" action="{% url 'dictation:submit' session.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="replay_count" id="replay_count" value="0">
+
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label for="typed_text" class="form-label fw-bold text-uppercase small mb-0">Votre transcription</label>
+            <span class="text-muted small">Anti copier-coller · Sauvegarde auto</span>
+          </div>
+
+          <textarea
+            name="typed_text"
+            id="typed_text"
+            rows="9"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            data-gramm="false"
+            disabled
+            placeholder="Cliquez sur « Lancer la dictée » ci-dessus pour démarrer le chronomètre et déverrouiller la zone de saisie..."
+            class="form-control fs-5 p-3 mb-3"
+          ></textarea>
+
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <span class="small text-muted" id="submit-hint">Le chronomètre ne démarre que lorsque vous cliquez sur « Lancer la dictée ».</span>
+            <button type="submit" id="btn-submit" class="btn-mentor px-4 py-2" disabled>
+              Envoyer pour correction
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+{{ config|json_script:"session-config" }}
+<script src="{% static 'dictation/session.js' %}?v=5"></script>
+{% endblock %}

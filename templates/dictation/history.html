@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Historique de vos dictées{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Historique des dictées</h1>
+            <p class="mb-0">Retrouvez l'ensemble de vos entraînements, révisez vos corrections et refaites les textes de votre choix.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li class="current">Historique</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="mentor-card">
+    {% if submissions %}
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <h3 class="h5 fw-bold mb-0">Toutes vos sessions corrigées</h3>
+        <a href="{% url 'dictation:start' %}" class="btn-mentor btn-sm">
+          Nouvelle dictée
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Texte</th>
+              <th class="text-center">Niveau</th>
+              <th class="text-center">Score</th>
+              <th class="text-center">Statut</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in submissions %}
+              <tr>
+                <td class="text-muted small text-nowrap">{{ sub.created_at|date:"d/m/Y à H:i" }}</td>
+                <td>
+                  <div class="fw-bold text-dark">{{ sub.session.text.title }}</div>
+                  <small class="text-muted">{{ sub.session.text.word_count }} mots · {{ sub.session.text.theme|default:"Général" }}</small>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-light text-dark border">{{ sub.session.text.level.code }}</span>
+                </td>
+                <td class="text-center fw-bold {% if sub.score >= sub.session.text.level.text_pass_score %}text-success{% else %}text-danger{% endif %}">
+                  {{ sub.score|floatformat:0 }}%
+                </td>
+                <td class="text-center">
+                  {% if sub.validated %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Validé</span>
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Non validé</span>
+                  {% endif %}
+                </td>
+                <td class="text-end text-nowrap">
+                  <a href="{% url 'dictation:result' sub.session.pk %}" class="btn btn-sm btn-outline-success rounded-pill px-3 me-1">
+                    Voir la correction
+                  </a>
+                  <a href="{% url 'dictation:start' %}?text={{ sub.session.text.pk }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                    Refaire
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5">
+        <h4>Aucune dictée enregistrée</h4>
+        <p class="text-muted">Lancez votre première session de dictée pour voir votre progression ici.</p>
+        <a href="{% url 'dictation:start' %}" class="btn-mentor mt-2">Commencer maintenant</a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

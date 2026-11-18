@@ -1,0 +1,122 @@
+{% extends "backoffice/base_admin.html" %}
+{% block admin_title %}Badges & Paramètres Globaux{% endblock %}
+{% block admin_heading %}Gestion des Badges & Paramètres Globaux{% endblock %}
+{% block admin_breadcrumb %}<li class="current">Badges & Paramètres</li>{% endblock %}
+
+{% block admin_content %}
+  <div class="row g-4">
+    <!-- Gestion des Badges -->
+    <div class="col-lg-6">
+      <div class="mentor-card h-100">
+        <h3 class="h5 fw-bold mb-3">Catalogue des Badges</h3>
+
+        <form method="post" class="p-3 rounded bg-light border mb-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_badge">
+          <div class="fw-bold small text-uppercase text-muted mb-2">Ajouter un badge</div>
+          <div class="row g-2">
+            <div class="col-sm-4">{{ badge_form.code }}</div>
+            <div class="col-sm-8">{{ badge_form.name }}</div>
+            <div class="col-sm-9">{{ badge_form.description }}</div>
+            <div class="col-sm-3">
+              <button type="submit" class="btn-mentor btn-sm w-100">Ajouter</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Code</th>
+                <th>Badge & Condition</th>
+                <th class="text-center">Attribué</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in badges %}
+                <tr>
+                  <td class="font-monospace small">{{ b.code }}</td>
+                  <td>
+                    <div class="fw-bold">{{ b.name }}</div>
+                    <small class="text-muted">{{ b.description }}</small>
+                  </td>
+                  <td class="text-center fw-semibold">{{ b.holders_count }}</td>
+                  <td class="text-end">
+                    <form method="post" class="d-inline" onsubmit="return confirm('Supprimer ce badge ?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_badge">
+                      <input type="hidden" name="badge_id" value="{{ b.pk }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2">Supprimer</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-3">Aucun badge configuré.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gestion des Paramètres Globaux -->
+    <div class="col-lg-6">
+      <div class="mentor-card h-100">
+        <h3 class="h5 fw-bold mb-3">Paramètres Globaux de la Plateforme</h3>
+
+        <form method="post" class="p-3 rounded bg-light border mb-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_setting">
+          <div class="fw-bold small text-uppercase text-muted mb-2">Ajouter ou modifier un paramètre</div>
+          <div class="row g-2">
+            <div class="col-sm-5">{{ setting_form.key }}</div>
+            <div class="col-sm-7">{{ setting_form.value }}</div>
+            <div class="col-sm-9">{{ setting_form.description }}</div>
+            <div class="col-sm-3">
+              <button type="submit" class="btn-mentor btn-sm w-100">Enregistrer</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Clé</th>
+                <th>Valeur</th>
+                <th>Description</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in settings_list %}
+                <tr>
+                  <td class="font-monospace fw-bold small">{{ s.key }}</td>
+                  <td class="font-monospace text-success fw-semibold">{{ s.value }}</td>
+                  <td class="small text-muted">{{ s.description }}</td>
+                  <td class="text-end">
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_setting">
+                      <input type="hidden" name="setting_id" value="{{ s.pk }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2">Supprimer</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-3">Aucun paramètre personnalisé enregistré.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

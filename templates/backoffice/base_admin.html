@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{% block admin_title %}Administration{% endblock %}{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>{% block admin_heading %}Administration de la Plateforme{% endblock %}</h1>
+            <p class="mb-0">{% block admin_subtitle %}Gérez les textes de dictée, les seuils CECRL, les comptes utilisateurs et le suivi des évaluations.{% endblock %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li><a href="{% url 'backoffice:dashboard' %}">Administration</a></li>
+          {% block admin_breadcrumb %}{% endblock %}
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <!-- Barre de navigation de l'espace d'administration -->
+  <div class="mentor-card p-3 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'backoffice:dashboard' %}" class="{% if active_tab == 'dashboard' %}btn-mentor{% else %}btn-mentor-outline{% endif %} btn-sm">
+          Vue d'ensemble
+        </a>
+        <a href="{% url 'backoffice:texts' %}" class="{% if active_tab == 'texts' %}btn-mentor{% else %}btn-mentor-outline{% endif %} btn-sm">
+          Textes de dictée
+        </a>
+        <a href="{% url 'backoffice:levels' %}" class="{% if active_tab == 'levels' %}btn-mentor{% else %}btn-mentor-outline{% endif %} btn-sm">
+          Niveaux CECRL
+        </a>
+        <a href="{% url 'backoffice:users' %}" class="{% if active_tab == 'users' %}btn-mentor{% else %}btn-mentor-outline{% endif %} btn-sm">
+          Utilisateurs
+        </a>
+        <a href="{% url 'backoffice:submissions' %}" class="{% if active_tab == 'submissions' %}btn-mentor{% else %}btn-mentor-outline{% endif %} btn-sm">
+          Copies & Scores
+        </a>
+        <a href="{% url 'backoffice:settings' %}" class="{% if active_tab == 'settings' %}btn-mentor{% else %}btn-mentor-outline{% endif %} btn-sm">
+          Badges & Paramètres
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% block admin_content %}{% endblock %}
+{% endblock %}
+

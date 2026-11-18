@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Mon Profil & Préférences{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Profil & Préférences d'Apprentissage</h1>
+            <p class="mb-0">Personnalisez votre voix vocale préférée, votre accent, votre pays et vos thèmes de dictée.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li class="current">Mon Profil</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center gy-4">
+    <!-- Left Card: Profile Summary -->
+    <div class="col-lg-4">
+      <div class="mentor-card text-center">
+        <div class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold fs-2 mb-3" style="width: 72px; height: 72px; background: var(--accent-color);">
+          {{ user.username|make_list|first|upper }}
+        </div>
+        <h3 class="h4 fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h3>
+        <p class="text-muted small mb-3">{{ user.email }} · {{ user.get_role_display }}</p>
+
+        <div class="d-flex justify-content-center gap-2 mb-3">
+          <span class="badge bg-success px-3 py-2">Niveau {{ level.code|default:"A1" }}</span>
+          <span class="xp-pill">{{ user.xp }} XP</span>
+        </div>
+
+        <hr>
+        <div class="d-grid gap-2">
+          <a href="{% url 'learning:placement' %}" class="btn-mentor-outline btn-sm">
+            Passer le test de niveau
+          </a>
+          <a href="{% url 'learning:progression' %}" class="btn-mentor-outline btn-sm">
+            Voir ma progression CECRL
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Card: Settings Form -->
+    <div class="col-lg-8">
+      <div class="mentor-card">
+        <h3 class="h4 fw-bold mb-4">Paramètres du compte & Voix vocale</h3>
+
+        <form method="post">
+          {% csrf_token %}
+
+          {% if form.errors %}
+            <div class="alert alert-danger small">
+              <strong class="d-block mb-1">Veuillez corriger les informations indiquées ci-dessous :</strong>
+              <ul class="mb-0 ps-3">
+                {% for field in form %}
+                  {% for err in field.errors %}
+                    <li><strong>{{ field.label }} :</strong> {{ err }}</li>
+                  {% endfor %}
+                {% endfor %}
+                {% for err in form.non_field_errors %}
+                  <li>{{ err }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-uppercase" for="{{ form.first_name.id_for_label }}">Prénom</label>
+              <input type="text" name="first_name" id="{{ form.first_name.id_for_label }}" value="{{ form.first_name.value|default:'' }}" class="form-control">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-uppercase" for="{{ form.last_name.id_for_label }}">Nom</label>
+              <input type="text" name="last_name" id="{{ form.last_name.id_for_label }}" value="{{ form.last_name.value|default:'' }}" class="form-control">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-uppercase" for="{{ form.email.id_for_label }}">Adresse e-mail</label>
+              <input type="email" name="email" id="{{ form.email.id_for_label }}" value="{{ form.email.value|default:'' }}" class="form-control">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-uppercase" for="{{ form.country.id_for_label }}">Pays de résidence</label>
+              <select name="country" id="{{ form.country.id_for_label }}" class="form-select">
+                {% for val, lbl in form.fields.country.choices %}
+                  <option value="{{ val }}" {% if form.country.value == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-uppercase" for="{{ form.goal.id_for_label }}">Objectif principal</label>
+              <select name="goal" id="{{ form.goal.id_for_label }}" class="form-select">
+                {% for val, lbl in form.fields.goal.choices %}
+                  <option value="{{ val }}" {% if form.goal.value == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-uppercase" for="{{ form.preferred_accent.id_for_label }}">Accent préféré</label>
+              <select name="preferred_accent" id="{{ form.preferred_accent.id_for_label }}" class="form-select">
+                <option value="us" {% if form.preferred_accent.value == 'us' %}selected{% endif %}>Américain (US)</option>
+                <option value="uk" {% if form.preferred_accent.value == 'uk' %}selected{% endif %}>Britannique (UK)</option>
+                <option value="au" {% if form.preferred_accent.value == 'au' %}selected{% endif %}>Australien (AU)</option>
+                <option value="in" {% if form.preferred_accent.value == 'in' %}selected{% endif %}>Indien (IN)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Voix vocale préférée -->
+          <div class="p-3 rounded-3 mb-4" style="background: #f4fbf6; border: 1px solid #ccebd6;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label small fw-bold text-uppercase mb-0" for="id_preferred_voice">
+                Voix vocale préférée
+              </label>
+              <button type="button" id="btn-test-profile-voice" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                Tester cette voix
+              </button>
+            </div>
+            <select name="preferred_voice" id="id_preferred_voice" data-saved="{{ form.preferred_voice.value|default:'' }}" class="form-select">
+              <option value="">Automatique (selon mon accent préféré)</option>
+            </select>
+          </div>
+
+          <!-- Centres d'intérêt -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-uppercase d-block">Centres d'intérêt (thèmes de vos dictées)</label>
+            <div class="row g-2 p-3 rounded bg-light border">
+              {% for choice in form.interests %}
+                <div class="col-sm-4 col-6">
+                  <label class="form-check-label d-flex align-items-center gap-2 small" style="cursor: pointer;">
+                    {{ choice.tag }}
+                    <span>{{ choice.choice_label }}</span>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-4 pt-2 border-top">
+            <div class="form-check mb-2">
+              <input type="checkbox" name="sound_effects" id="id_sound_effects" class="form-check-input" {% if form.sound_effects.value %}checked{% endif %}>
+              <label class="form-check-label small" for="id_sound_effects">
+                Activer les effets visuels et sons stimulants lors des réussites
+              </label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" name="is_anonymous_leaderboard" id="id_anon" class="form-check-input" {% if form.is_anonymous_leaderboard.value %}checked{% endif %}>
+              <label class="form-check-label small" for="id_anon">
+                Masquer mon nom/pseudo dans le classement public
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-mentor w-100 py-3">
+            Enregistrer mes préférences
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var synth = window.speechSynthesis;
+  var voiceSelect = document.getElementById("id_preferred_voice");
+  var accentSelect = document.getElementById("{{ form.preferred_accent.id_for_label }}");
+  var testBtn = document.getElementById("btn-test-profile-voice");
+  if (!synth || !voiceSelect) return;
+
+  var ACCENT_MAP = { us: "en-us", uk: "en-gb", au: "en-au", in: "en-in" };
+  var savedVoice = voiceSelect.getAttribute("data-saved") || "";
+  try {
+    if (!savedVoice) savedVoice = localStorage.getItem("dictee-preferred-voice") || "";
+  } catch (e) {}
+
+  function populateVoices() {
+    var all = synth.getVoices() || [];
+    var enVoices = all.filter(function (v) {
+      return v.lang && v.lang.toLowerCase().indexOf("en") === 0;
+    });
+    if (!enVoices.length) enVoices = all;
+
+    var currentVal = voiceSelect.value || savedVoice;
+    voiceSelect.innerHTML = '<option value="">Automatique (selon mon accent préféré)</option>';
+    enVoices.forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = v.name;
+      opt.textContent = v.name + " (" + v.lang.replace("_", "-") + ")";
+      if (v.name === currentVal) opt.selected = true;
+      voiceSelect.appendChild(opt);
+    });
+  }
+
+  populateVoices();
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = populateVoices;
+  }
+
+  voiceSelect.addEventListener("change", function () {
+    savedVoice = voiceSelect.value;
+    try { localStorage.setItem("dictee-preferred-voice", savedVoice); } catch (e) {}
+  });
+
+  if (testBtn) {
+    testBtn.addEventListener("click", function () {
+      synth.cancel();
+      var all = synth.getVoices() || [];
+      var chosenName = voiceSelect.value;
+      var accentCode = accentSelect ? accentSelect.value : "us";
+      var targetLang = ACCENT_MAP[accentCode] || "en-us";
+      var picked = (chosenName && all.find(function (v) { return v.name === chosenName; })) ||
+                   all.find(function (v) { return v.lang.replace("_", "-").toLowerCase() === targetLang; }) ||
+                   all.find(function (v) { return v.lang.toLowerCase().indexOf("en") === 0; }) || null;
+      var u = new SpeechSynthesisUtterance("Hello! This is your preferred English voice for dictation.");
+      u.lang = picked ? picked.lang : "en-US";
+      if (picked) u.voice = picked;
+      synth.speak(u);
+    });
+  }
+})();
+</script>
+{% endblock %}

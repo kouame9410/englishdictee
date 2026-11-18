@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Badges & Classement{% endblock %}
+
+{% block page_header %}
+  <div class="page-title" data-aos="fade">
+    <div class="heading">
+      <div class="container">
+        <div class="row d-flex justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1>Badges & Classement</h1>
+            <p class="mb-0">Collectionnez les badges au fil de vos dictées et mesurez vos progrès avec la communauté.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="breadcrumbs">
+      <div class="container">
+        <ol>
+          <li><a href="{% url 'home' %}">Accueil</a></li>
+          <li class="current">Badges & Classement</li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <!-- Collection de Badges -->
+  <div class="mentor-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="h5 fw-bold mb-0">Collection de Badges</h3>
+      <span class="badge-mentor">{{ owned_ids|length }} / {{ all_badges|length }} débloqués</span>
+    </div>
+
+    <div class="row g-3">
+      {% for badge in all_badges %}
+        <div class="col-md-4 col-sm-6">
+          <div class="p-3 rounded border h-100 {% if badge.id in owned_ids %}bg-white border-success shadow-sm{% else %}bg-light opacity-50{% endif %}">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
+              <strong class="text-dark small">{{ badge.name }}</strong>
+              {% if badge.id in owned_ids %}
+                <span class="badge bg-success-subtle text-success">Acquis</span>
+              {% endif %}
+            </div>
+            <p class="small text-muted mb-0">{{ badge.description }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Classement des Apprenants -->
+  <div class="mentor-card">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="h5 fw-bold mb-0">Classement des Apprenants</h3>
+        <small class="text-muted">Mis à jour en temps réel selon les points XP accumulés.</small>
+      </div>
+      <a href="{% url 'profile' %}" class="btn-mentor-outline btn-sm">Option d'anonymat</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center" style="width: 80px;">Rang</th>
+            <th>Apprenant</th>
+            <th class="text-end">Points XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in leaderboard %}
+            <tr class="{% if row.is_me %}table-success fw-bold{% endif %}">
+              <td class="text-center fw-bold">{{ row.rank }}</td>
+              <td>
+                {{ row.display_name }}
+                {% if row.is_me %}
+                  <span class="badge bg-success ms-2">Vous</span>
+                {% endif %}
+              </td>
+              <td class="text-end fw-bold font-monospace">{{ row.xp }} XP</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

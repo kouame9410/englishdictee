@@ -1,0 +1,64 @@
+{% extends "backoffice/base_admin.html" %}
+{% block admin_title %}Gestion des Niveaux CECRL{% endblock %}
+{% block admin_heading %}Gestion des Niveaux CECRL{% endblock %}
+{% block admin_breadcrumb %}<li class="current">Niveaux CECRL</li>{% endblock %}
+
+{% block admin_content %}
+  <div class="mentor-card">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+      <div>
+        <h3 class="h5 fw-bold mb-0">Paramètres pédagogiques par niveau</h3>
+        <small class="text-muted">Définissez les seuils de validation, le nombre de textes requis et la condition d'examen final.</small>
+      </div>
+      <a href="{% url 'backoffice:level_create' %}" class="btn-mentor btn-sm">
+        Ajouter un niveau
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Ordre</th>
+            <th>Code</th>
+            <th>Intitulé</th>
+            <th class="text-center">Longueur (mots)</th>
+            <th class="text-center">Score min / texte</th>
+            <th class="text-center">Textes requis</th>
+            <th class="text-center">Moyenne exigée</th>
+            <th class="text-center">Examen final</th>
+            <th class="text-center">Textes en banque</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lvl in levels %}
+            <tr>
+              <td class="fw-bold">{{ lvl.order }}</td>
+              <td><span class="badge-mentor">{{ lvl.code }}</span></td>
+              <td class="fw-semibold">{{ lvl.name }}</td>
+              <td class="text-center small">{{ lvl.min_words }} – {{ lvl.max_words }}</td>
+              <td class="text-center fw-bold">{{ lvl.text_pass_score }} %</td>
+              <td class="text-center">{{ lvl.required_texts }}</td>
+              <td class="text-center fw-bold text-success">{{ lvl.required_average }} %</td>
+              <td class="text-center">
+                {% if lvl.requires_exam %}
+                  <span class="badge bg-warning text-dark">Obligatoire</span>
+                {% else %}
+                  <span class="badge bg-light text-muted border">Non</span>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ lvl.texts_count }}</td>
+              <td class="text-end">
+                <a href="{% url 'backoffice:level_edit' lvl.pk %}" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                  Modifier
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+
